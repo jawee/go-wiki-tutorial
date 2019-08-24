@@ -1,7 +1,7 @@
 package main
 
 import (
-    "fmt"
+    "html/template"
     "io/ioutil"
     "log"
     "net/http"
@@ -17,6 +17,11 @@ func (p *Page) save() error {
     return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
+func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
+    t, _ := template.ParseFiles(tmpl + ".html")
+    t.Execute(w, p)
+}
+
 func loadPage(title string) (*Page, error) {
     filename := title + ".txt"
     body, err := ioutil.ReadFile(filename)
@@ -29,7 +34,7 @@ func loadPage(title string) (*Page, error) {
 func viewHandler(w http.ResponseWriter, r *http.Request) {
     title := r.URL.Path[len("/view/"):]
     p, _ := loadPage(title)
-    fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
+    renderTemplate(w, "view", p)
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request) {
@@ -38,17 +43,12 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
     if err != nil {
         p = &Page{Title: title}
     }
-    fmt.Fprintf(w, "<h1>Editing %s</h1>"+
-                    "<form action=\"/save/%s\" method=\"POST\">"+
-                    "<textarea name=\"body\">%s</textarea><br>"+
-                    "<input type=\"submit\" value=\"Save\">"+
-                    "</form>",
-                    p.Title, p.Title, p.Body)
+    renderTemplate(w, "edit", p)
 }
 
 func main() {
     http.HandleFunc("/view/", viewHandler)
-    http.HandleFunc/"/edit/", editHandler)
-    http.HandleFunc("/save/", saveHandler)
+    http.HandleFunc("/edit/", editHandler)
+//    http.HandleFunc("/save/", saveHandler)
     log.Fatal(http.ListenAndServe(":8080", nil))
 }
