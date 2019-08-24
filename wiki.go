@@ -8,6 +8,7 @@ import (
     "regexp"
     "errors"
     "fmt"
+    "os"
 )
 
 type Page struct {
@@ -88,8 +89,12 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func main() {
+    var PORT string
+    if PORT = os.Getenv("PORT"); PORT == "" {
+        PORT = "8080"
+    }
     http.HandleFunc("/view/", makeHandler(viewHandler))
     http.HandleFunc("/edit/", makeHandler(editHandler))
     http.HandleFunc("/save/", makeHandler(saveHandler))
-    log.Fatal(http.ListenAndServe(":8080", nil))
+    log.Fatal(http.ListenAndServe(":" + PORT, nil))
 }
